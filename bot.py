@@ -51,6 +51,7 @@ def handle_callback(call):
             'format': 'best[ext=mp4]/best',
             'outtmpl': unique_filename + '.%(ext)s',
             'noplaylist': True,
+            'cookiefile': 'cookies.txt',
             'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
         }
     else: # صوت
@@ -58,6 +59,7 @@ def handle_callback(call):
             'format': 'bestaudio[ext=m4a]/bestaudio', # اخترنا m4a لأنها تعمل مباشرة كرسالة صوتية في تيليجرام بدون برامج إضافية
             'outtmpl': unique_filename + '.%(ext)s',
             'noplaylist': True,
+            'cookiefile': 'cookies.txt',
             'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
         }
 
