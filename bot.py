@@ -5,7 +5,7 @@ from keep_alive import keep_alive
 
 # 1. من الأفضل استدعاء التوكن من متغيرات البيئة (حماية لك)
 # لا تنسَ عمل Revoke للتوكن القديم من BotFather!
-TOKEN = os.getenv('BOT_TOKEN', '8775190237:AAGFp6jlqlJ-lOK7PuqOD6qQlS__8NEMTi4')
+TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
