@@ -1,56 +1,100 @@
 import telebot
 import yt_dlp
 import os
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from keep_alive import keep_alive
 
-# 1. من الأفضل استدعاء التوكن من متغيرات البيئة (حماية لك)
-# لا تنسَ عمل Revoke للتوكن القديم من BotFather!
+# استدعاء التوكن بشكل آمن
 TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "مرحباً بك في بوت تنزيل فيديوهات يوتيوب.")
+    bot.reply_to(message, "مرحباً بك في بوت التحميل الاحترافي 🚀\nأرسل لي أي رابط من يوتيوب للبدء.")
 
 @bot.message_handler(func=lambda message: "youtu" in message.text)
-def download_youtube(message):
-    bot.reply_to(message, "جاري معالجة الرابط والتحميل... ⏳ (قد يستغرق الأمر بعض الوقت حسب حجم المقطع)")
+def handle_youtube_link(message):
     url = message.text
     
-    # 2. إنشاء اسم فريد للملف باستخدام آي دي المحادثة ورقم الرسالة لمنع تداخل تحميلات المستخدمين
-    unique_filename = f"video_{message.chat.id}_{message.message_id}.mp4"
+    # 1. إنشاء أزرار تفاعلية (Inline Keyboard)
+    markup = InlineKeyboardMarkup()
+    btn_video = InlineKeyboardButton("تحميل كفيديو (MP4) 🎬", callback_data=f"mp4|{url}")
+    btn_audio = InlineKeyboardButton("تحميل كصوت 🎵", callback_data=f"audio|{url}")
+    markup.add(btn_video, btn_audio)
     
-    # إعدادات التحميل: إجبار المكتبة على ألا تتجاوز 50 ميجا (بدون السماح ببدائل أكبر)
-    ydl_opts = {
-        'format': 'best[ext=mp4]/best', # إزالة شرط الحجم المسبق
-        'outtmpl': f"video_{message.chat.id}_{message.message_id}.mp4",
-        'quiet': False, # مهم جداً: يجعل الأخطاء تظهر في Logs منصة Render لتسهيل اكتشاف المشكلة
-        'noplaylist': True,
-        # السطر التالي يخدع يوتيوب ويجعله يظن أن الطلب قادم من تطبيق أندرويد لتجاوز الحظر
-        'extractor_args': {'youtube': {'player_client': ['android', 'web']}} 
-    }
+    bot.reply_to(message, "الرابط جاهز! اختر الصيغة التي تريد التحميل بها:", reply_markup=markup)
 
+# 2. التعامل مع ضغطات الأزرار
+@bot.callback_query_handler(func=lambda call: True)
+def handle_callback(call):
+    # إيقاف علامة التحميل في الزر
+    bot.answer_callback_query(call.id, "جاري معالجة طلبك... ⏳")
+    
+    # تعديل رسالة البوت بدلاً من إرسال رسالة جديدة
+    bot.edit_message_text("جاري معالجة الرابط والتحميل... ⏳\nيرجى الانتظار...", 
+                          chat_id=call.message.chat.id, 
+                          message_id=call.message.message_id)
+    
+    # استخراج نوع الصيغة والرابط من الزر
+    data = call.data.split("|", 1)
+    format_type = data[0]
+    url = data[1]
+    
+    chat_id = call.message.chat.id
+    msg_id = call.message.message_id
+    
+    unique_filename = f"media_{chat_id}_{msg_id}"
+    
+    # إعدادات التحميل بناءً على اختيار المستخدم
+    if format_type == "mp4":
+        ydl_opts = {
+            'format': 'best[ext=mp4]/best',
+            'outtmpl': unique_filename + '.%(ext)s',
+            'noplaylist': True,
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
+        }
+    else: # صوت
+        ydl_opts = {
+            'format': 'bestaudio[ext=m4a]/bestaudio', # اخترنا m4a لأنها تعمل مباشرة كرسالة صوتية في تيليجرام بدون برامج إضافية
+            'outtmpl': unique_filename + '.%(ext)s',
+            'noplaylist': True,
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
+        }
+
+    downloaded_file = None
     try:
-        # تحميل المقطع
+        # عملية التحميل
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+            info = ydl.extract_info(url, download=True)
+            ext = info.get('ext', 'mp4') if format_type == 'mp4' else info.get('ext', 'm4a')
+            downloaded_file = f"{unique_filename}.{ext}"
         
-        # التأكد من أن الملف تم تحميله فعلاً
-        if os.path.exists(unique_filename):
-            with open(unique_filename, 'rb') as video:
-                bot.send_video(message.chat.id, video, caption="تم التحميل بنجاح! ✅")
-        else:
-            bot.reply_to(message, "❌ عذراً، لا يوجد نسخة من هذا المقطع بحجم أقل من 50 ميجابايت.")
+        # عملية الإرسال للمستخدم
+        if os.path.exists(downloaded_file):
+            with open(downloaded_file, 'rb') as file:
+                if format_type == "mp4":
+                    bot.send_video(chat_id, file, caption="تم التحميل بنجاح! ✅")
+                else:
+                    bot.send_audio(chat_id, file, caption="تم التحميل بنجاح! ✅")
             
+            # حذف رسالة "جاري التحميل" لتنظيف المحادثة
+            bot.delete_message(chat_id, msg_id) 
+        else:
+            bot.edit_message_text("❌ حدثت مشكلة، لم يتم العثور على الملف بعد التحميل.", chat_id=chat_id, message_id=msg_id)
+
     except Exception as e:
-        bot.reply_to(message, "❌ عذراً، حدث خطأ أثناء معالجة الرابط. تأكد من صحة الرابط أو أن حجم المقطع يتجاوز الحد المسموح.")
-        print(f"Error: {e}")
+        # طباعة الخطأ الفعلي لكي نعرف إذا كان يوتيوب قد حظرنا
+        error_msg = str(e).split('\n')[0][:100]
+        bot.edit_message_text(f"❌ عذراً، فشل التحميل.\nالسبب التقني:\n{error_msg}", chat_id=chat_id, message_id=msg_id)
         
     finally:
-        # 3. وضع الحذف في finally يضمن مسح الفيديو في كل الحالات، حتى لو حدث خطأ أثناء الإرسال
-        if os.path.exists(unique_filename):
-            os.remove(unique_filename)
+        # تنظيف وحذف الملفات من سيرفر Render لتوفير المساحة
+        if downloaded_file and os.path.exists(downloaded_file):
+            os.remove(downloaded_file)
+        for f in os.listdir('.'):
+            if f.startswith(unique_filename):
+                os.remove(f)
 
-print("البوت يعمل الآن...")
+print("البوت الاحترافي يعمل الآن...")
 keep_alive() 
 bot.infinity_polling()
