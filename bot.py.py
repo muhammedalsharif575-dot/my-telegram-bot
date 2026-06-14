@@ -21,7 +21,7 @@ def download_youtube(message):
     unique_filename = f"video_{message.chat.id}_{message.message_id}.mp4"
     
     # إعدادات التحميل: إجبار المكتبة على ألا تتجاوز 50 ميجا (بدون السماح ببدائل أكبر)
-        ydl_opts = {
+    ydl_opts = {
         'format': 'best[ext=mp4]/best', # إزالة شرط الحجم المسبق
         'outtmpl': f"video_{message.chat.id}_{message.message_id}.mp4",
         'quiet': False, # مهم جداً: يجعل الأخطاء تظهر في Logs منصة Render لتسهيل اكتشاف المشكلة
