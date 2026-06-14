@@ -1,14 +1,14 @@
 import telebot
 import yt_dlp
-import commands
+import os  # تم تعديل هذا السطر ليعمل أمر حذف الفيديو بنجاح
 from keep_alive import keep_alive
 
-TOKEN = '8775190237:AAGFp6jlqlJ-lOK7PuqOD6qQlS__8NEMTi4'
+TOKEN = '8775190237:AAGFp6jlqlJ-lOk7PuqOD6qQlS__8NEMTi4'
 bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "مرحباً بك في بوت  تنزيل فيديوهات يوتيوب.")
+    bot.reply_to(message, "مرحباً بك في بوت تنزيل فيديوهات يوتيوب.")
 
 @bot.message_handler(func=lambda message: "youtu" in message.text)
 def download_youtube(message):
