@@ -21,13 +21,15 @@ def download_youtube(message):
     unique_filename = f"video_{message.chat.id}_{message.message_id}.mp4"
     
     # إعدادات التحميل: إجبار المكتبة على ألا تتجاوز 50 ميجا (بدون السماح ببدائل أكبر)
-    ydl_opts = {
-        'format': 'best[ext=mp4][filesize<50M]',
-        'outtmpl': unique_filename,
-        'quiet': True,
-        'noplaylist': True # لمنع تحميل قوائم التشغيل بالكامل عن طريق الخطأ
+        ydl_opts = {
+        'format': 'best[ext=mp4]/best', # إزالة شرط الحجم المسبق
+        'outtmpl': f"video_{message.chat.id}_{message.message_id}.mp4",
+        'quiet': False, # مهم جداً: يجعل الأخطاء تظهر في Logs منصة Render لتسهيل اكتشاف المشكلة
+        'noplaylist': True,
+        # السطر التالي يخدع يوتيوب ويجعله يظن أن الطلب قادم من تطبيق أندرويد لتجاوز الحظر
+        'extractor_args': {'youtube': {'player_client': ['android', 'web']}} 
     }
-    
+
     try:
         # تحميل المقطع
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
