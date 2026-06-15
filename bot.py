@@ -46,22 +46,24 @@ def handle_callback(call):
     unique_filename = f"media_{chat_id}_{msg_id}"
     
     # --- التعديل تم هنا لضمان عدم فشل التحميل بسبب الصيغة ---
+        # إعدادات التحميل الجذري
     if format_type == "mp4":
         ydl_opts = {
-            'format': 'best', # تعديل سحري يجلب أفضل جودة فيديو وصوت مدمجة متوفرة
+            # هذه الصيغة تعني: ادمج أفضل فيديو وصوت، وإذا فشلت، ابحث عن أفضل فيديو مدمج جاهز بصيغة mp4، وإذا فشلت، حمل أي شيء متاح
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
             'outtmpl': unique_filename + '.%(ext)s',
             'noplaylist': True,
             'cookiefile': 'cookies.txt',
-            'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
+            'merge_output_format': 'mp4' # إجبار البوت على إخراج ملف mp4
         }
     else: # صوت
         ydl_opts = {
-            'format': 'bestaudio/best', # يجلب أفضل مسار صوتي متوفر
+            'format': 'bestaudio[ext=m4a]/bestaudio/best',
             'outtmpl': unique_filename + '.%(ext)s',
             'noplaylist': True,
-            'cookiefile': 'cookies.txt',
-            'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
+            'cookiefile': 'cookies.txt'
         }
+
 
     downloaded_file = None
     try:
