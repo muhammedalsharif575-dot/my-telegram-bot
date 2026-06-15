@@ -47,21 +47,22 @@ def handle_callback(call):
     
     # --- التعديل تم هنا لضمان عدم فشل التحميل بسبب الصيغة ---
         # إعدادات التحميل الجذري
+        # إعدادات التحميل المخصصة لسيرفرات Render (تتجاوز غياب ffmpeg)
     if format_type == "mp4":
         ydl_opts = {
-            # هذه الصيغة تعني: ادمج أفضل فيديو وصوت، وإذا فشلت، ابحث عن أفضل فيديو مدمج جاهز بصيغة mp4، وإذا فشلت، حمل أي شيء متاح
-            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'format': '22/18/b', # 22=720p, 18=360p (صيغ مدمجة جاهزة لا تحتاج دمج)
             'outtmpl': unique_filename + '.%(ext)s',
             'noplaylist': True,
             'cookiefile': 'cookies.txt',
-            'merge_output_format': 'mp4' # إجبار البوت على إخراج ملف mp4
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
         }
     else: # صوت
         ydl_opts = {
-            'format': 'bestaudio[ext=m4a]/bestaudio/best',
+            'format': '140/bestaudio/b', # 140=m4a (مسار صوتي جاهز)
             'outtmpl': unique_filename + '.%(ext)s',
             'noplaylist': True,
-            'cookiefile': 'cookies.txt'
+            'cookiefile': 'cookies.txt',
+            'extractor_args': {'youtube': {'player_client': ['android', 'web']}}
         }
 
 
