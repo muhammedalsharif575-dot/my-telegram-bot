@@ -18,7 +18,7 @@ def handle_youtube_link(message):
     
     # 1. إنشاء أزرار تفاعلية (Inline Keyboard)
     markup = InlineKeyboardMarkup()
-    btn_video = InlineKeyboardButton("تحميل كفيديو (MP4) 🎬", callback_data=f"mp4|{url}")
+    btn_video = InlineKeyboardButton("تحميل كفيديو 🎬", callback_data=f"mp4|{url}")
     btn_audio = InlineKeyboardButton("تحميل كصوت 🎵", callback_data=f"audio|{url}")
     markup.add(btn_video, btn_audio)
     
@@ -45,10 +45,10 @@ def handle_callback(call):
     
     unique_filename = f"media_{chat_id}_{msg_id}"
     
-    # إعدادات التحميل بناءً على اختيار المستخدم
+    # --- التعديل تم هنا لضمان عدم فشل التحميل بسبب الصيغة ---
     if format_type == "mp4":
         ydl_opts = {
-            'format': 'best[ext=mp4]/best',
+            'format': 'best', # تعديل سحري يجلب أفضل جودة فيديو وصوت مدمجة متوفرة
             'outtmpl': unique_filename + '.%(ext)s',
             'noplaylist': True,
             'cookiefile': 'cookies.txt',
@@ -56,7 +56,7 @@ def handle_callback(call):
         }
     else: # صوت
         ydl_opts = {
-            'format': 'bestaudio[ext=m4a]/bestaudio', # اخترنا m4a لأنها تعمل مباشرة كرسالة صوتية في تيليجرام بدون برامج إضافية
+            'format': 'bestaudio/best', # يجلب أفضل مسار صوتي متوفر
             'outtmpl': unique_filename + '.%(ext)s',
             'noplaylist': True,
             'cookiefile': 'cookies.txt',
@@ -97,6 +97,6 @@ def handle_callback(call):
             if f.startswith(unique_filename):
                 os.remove(f)
 
-print("البوت الاحترافي يعمل الآن...")
+print("البوت يعمل الآن...")
 keep_alive() 
 bot.infinity_polling()
